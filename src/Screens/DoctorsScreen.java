@@ -1,5 +1,8 @@
 package Screens;
 
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -11,11 +14,63 @@ package Screens;
  */
 public class DoctorsScreen extends javax.swing.JFrame {
 
+// Linked list that stores all doctors
+    private DoctorLinkedList doctorList = new DoctorLinkedList();
+
     /**
      * Creates new form MediClinicGUI
      */
     public DoctorsScreen() {
         initComponents();
+    }
+
+    /**
+     * Clears all input fields after adding a doctor.
+     */
+    private void clearFields() {
+
+        jTextField2.setText("");
+        jTextField3.setText("");
+        jTextField4.setText("");
+        jTextField6.setText("");
+        jTextField5.setText("");
+        jTextArea1.setText("");
+
+        jTextField3.requestFocus();
+
+    }
+
+    /**
+     * Loads all doctors from the linked list into the JTable.
+     */
+    private void loadDoctorsTable() {
+
+        // Get the table model
+        DefaultTableModel model
+                = (DefaultTableModel) jTable1.getModel();
+
+        // Clear existing rows
+        model.setRowCount(0);
+
+        // Start from the first node
+        DoctorNode current = doctorList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+
+            model.addRow(new Object[]{
+                current.doctor.getDoctorID(),
+                current.doctor.getDoctorName(),
+                current.doctor.getSpecialization(),
+                current.doctor.getPhoneNumber(),
+                current.doctor.getEmailAddress(),
+                current.doctor.getAddress()
+
+            });
+
+            current = current.next;
+        }
+
     }
 
     /**
@@ -57,7 +112,7 @@ public class DoctorsScreen extends javax.swing.JFrame {
         jTextField5 = new javax.swing.JTextField();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
-        jButton2 = new javax.swing.JButton();
+        btnAddDoctor = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
@@ -114,6 +169,11 @@ public class DoctorsScreen extends javax.swing.JFrame {
                 "Doctor ID", "Doctor Name", "Specialization", "Phone Number", "Email Address", "Address"
             }
         ));
+        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTable1MouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(jTable1);
 
         jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -191,23 +251,43 @@ public class DoctorsScreen extends javax.swing.JFrame {
         jTextArea1.setRows(5);
         jScrollPane2.setViewportView(jTextArea1);
 
-        jButton2.setBackground(new java.awt.Color(51, 153, 0));
-        jButton2.setForeground(new java.awt.Color(255, 255, 255));
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/plus.png"))); // NOI18N
-        jButton2.setText("Add");
+        btnAddDoctor.setBackground(new java.awt.Color(51, 153, 0));
+        btnAddDoctor.setForeground(new java.awt.Color(255, 255, 255));
+        btnAddDoctor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/plus.png"))); // NOI18N
+        btnAddDoctor.setText("Add");
+        btnAddDoctor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddDoctorActionPerformed(evt);
+            }
+        });
 
         jButton3.setBackground(new java.awt.Color(0, 102, 204));
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("Update");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setBackground(new java.awt.Color(255, 51, 51));
         jButton4.setForeground(new java.awt.Color(255, 255, 255));
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/bin.png"))); // NOI18N
         jButton4.setText("Delete");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
 
         jButton5.setBackground(new java.awt.Color(204, 204, 204));
         jButton5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/closed.png"))); // NOI18N
         jButton5.setText("Clear");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -248,7 +328,7 @@ public class DoctorsScreen extends javax.swing.JFrame {
                                     .addComponent(jTextField4, javax.swing.GroupLayout.Alignment.TRAILING))))
                         .addGap(18, 18, 18))
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jButton2)
+                        .addComponent(btnAddDoctor)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -289,7 +369,7 @@ public class DoctorsScreen extends javax.swing.JFrame {
                         .addComponent(jLabel14)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton2)
+                            .addComponent(btnAddDoctor)
                             .addComponent(jButton3)
                             .addComponent(jButton4)
                             .addComponent(jButton5))
@@ -398,6 +478,126 @@ public class DoctorsScreen extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnAddDoctorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddDoctorActionPerformed
+        String doctorName = jTextField3.getText();
+        String specialization = jTextField4.getText();
+        String phone = jTextField6.getText();
+        String email = jTextField5.getText();
+        String address = jTextArea1.getText();
+
+        doctorList.insertDoctor(
+                doctorName,
+                specialization,
+                phone,
+                email,
+                address);
+
+        clearFields();
+        loadDoctorsTable();
+    }//GEN-LAST:event_btnAddDoctorActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        String doctorID = jTextField2.getText();
+
+        DoctorNode node = doctorList.searchDoctorNode("Doctor ID", doctorID);
+        if (node != null) {
+
+            node.doctor.setDoctorName(jTextField3.getText());
+
+            node.doctor.setSpecialization(jTextField4.getText());
+
+            node.doctor.setPhoneNumber(jTextField6.getText());
+
+            node.doctor.setEmailAddress(jTextField5.getText());
+
+            node.doctor.setAddress(jTextArea1.getText());
+
+            loadDoctorsTable();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Doctor updated successfully!");
+
+            clearFields();
+
+        } else {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Doctor not found.");
+
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // Get the Doctor ID
+        String doctorID = jTextField2.getText();
+
+        // Check if a doctor is selected
+        if (doctorID.isEmpty()) {
+
+            JOptionPane.showMessageDialog(this,
+                    "Please select a doctor first.");
+
+            return;
+        }
+
+        // Ask for confirmation
+        int option = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to delete this doctor?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
+
+        if (option == JOptionPane.YES_OPTION) {
+
+            boolean deleted = doctorList.deleteDoctor(doctorID);
+
+            if (deleted) {
+
+                loadDoctorsTable();
+
+                clearFields();
+
+                JOptionPane.showMessageDialog(this,
+                        "Doctor deleted successfully.");
+
+            } else {
+
+                JOptionPane.showMessageDialog(this,
+                        "Doctor not found.");
+
+            }
+
+        }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        clearFields();
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
+        int row = jTable1.getSelectedRow();
+
+        jTextField2.setText(
+                jTable1.getValueAt(row, 0).toString());
+
+        jTextField3.setText(
+                jTable1.getValueAt(row, 1).toString());
+
+        jTextField4.setText(
+                jTable1.getValueAt(row, 2).toString());
+
+        jTextField6.setText(
+                jTable1.getValueAt(row, 3).toString());
+
+        jTextField5.setText(
+                jTable1.getValueAt(row, 4).toString());
+
+        jTextArea1.setText(
+                jTable1.getValueAt(row, 5).toString());
+    }//GEN-LAST:event_jTable1MouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -449,8 +649,8 @@ public class DoctorsScreen extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAddDoctor;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
