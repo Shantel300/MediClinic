@@ -1,5 +1,6 @@
 package Screens;
 
+import java.time.LocalDate;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -15,9 +16,6 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ConsultationScreen extends javax.swing.JFrame {
 
-// Linked list that stores all consultations
-    private ConsultationLinkedList consultationList = new ConsultationLinkedList();
-
     /**
      * Creates new form MediClinicGUI
      */
@@ -27,6 +25,11 @@ public class ConsultationScreen extends javax.swing.JFrame {
         // Populate the Patient/Doctor pickers from the shared linked lists
         loadPatientComboBox();
         loadDoctorComboBox();
+
+        // Consultation Date is read-only and always defaults to today - it
+        // should only ever change when a brand new consultation is created
+        txtConsultationDate.setEditable(false);
+        txtConsultationDate.setText(LocalDate.now().toString());
     }
 
     /**
@@ -45,7 +48,8 @@ public class ConsultationScreen extends javax.swing.JFrame {
             cmbDoctor.setSelectedIndex(0);
         }
 
-        txtConsultationDate.setText("");
+        // Reset back to today's date rather than leaving it blank
+        txtConsultationDate.setText(LocalDate.now().toString());
         jTextField3.setText("");
         jTextArea1.setText("");
 
@@ -64,7 +68,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
 
         // Start from the first node
-        PatientNode current = PatientsScreen.patientList.getHead();
+        PatientNode current = ClinicData.patientList.getHead();
 
         // Traverse the linked list
         while (current != null) {
@@ -92,7 +96,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
 
         // Start from the first node
-        DoctorNode current = DoctorsScreen.doctorList.getHead();
+        DoctorNode current = ClinicData.doctorList.getHead();
 
         // Traverse the linked list
         while (current != null) {
@@ -127,7 +131,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
      */
     private String buildPatientLabel(String patientID) {
 
-        Patient patient = PatientsScreen.patientList.searchPatient(patientID);
+        Patient patient = ClinicData.patientList.searchPatient(patientID);
 
         if (patient != null) {
             return patient.getPatientID() + " - " + patient.getPatientName();
@@ -143,7 +147,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
      */
     private String buildDoctorLabel(String doctorID) {
 
-        Doctor doctor = DoctorsScreen.doctorList.searchDoctor(doctorID);
+        Doctor doctor = ClinicData.doctorList.searchDoctor(doctorID);
 
         if (doctor != null) {
             return doctor.getDoctorID() + " - " + doctor.getDoctorName();
@@ -167,7 +171,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
         model.setRowCount(0);
 
         // Start from the first node
-        ConsultationNode current = consultationList.getHead();
+        ConsultationNode current = ClinicData.consultationList.getHead();
 
         // Traverse the linked list
         while (current != null) {
@@ -183,6 +187,54 @@ public class ConsultationScreen extends javax.swing.JFrame {
             });
 
             current = current.next;
+        }
+
+    }
+
+    /**
+     * Fills the Consultation Details fields (including the Patient/Doctor
+     * combo boxes) from a Consultation object. Shared by the Search handler
+     * and by selectConsultationByID.
+     */
+    private void populateConsultationFields(Consultation consultation) {
+
+        jTextField2.setText(consultation.getConsultationID());
+        cmbPatient.setSelectedItem(buildPatientLabel(consultation.getPatientID()));
+        cmbDoctor.setSelectedItem(buildDoctorLabel(consultation.getDoctorID()));
+        txtConsultationDate.setText(consultation.getConsultationDate());
+        jTextField3.setText(consultation.getDiagnosis());
+        jTextArea1.setText(consultation.getNotes());
+
+    }
+
+    /**
+     * Locates a consultation by ID in the shared ConsultationLinkedList,
+     * loads the table, populates the detail fields (Patient/Doctor combo
+     * boxes included), and selects/scrolls to the matching row. Called by
+     * the Dashboard's Global Search double-click so the user never has to
+     * search again.
+     */
+    public void selectConsultationByID(String consultationID) {
+
+        loadConsultationsTable();
+
+        Consultation consultation = ClinicData.consultationList.searchConsultation(consultationID);
+
+        if (consultation == null) {
+            return;
+        }
+
+        populateConsultationFields(consultation);
+
+        // Find and highlight the matching row in the table
+        for (int row = 0; row < tblConsultationList.getRowCount(); row++) {
+
+            if (tblConsultationList.getValueAt(row, 0).toString().equalsIgnoreCase(consultationID)) {
+
+                tblConsultationList.setRowSelectionInterval(row, row);
+                tblConsultationList.scrollRectToVisible(tblConsultationList.getCellRect(row, 0, true));
+                break;
+            }
         }
 
     }
@@ -613,11 +665,15 @@ public class ConsultationScreen extends javax.swing.JFrame {
         // Only the ID portion of "ID - Name" is stored on the Consultation
         String patientID = extractID((String) cmbPatient.getSelectedItem());
         String doctorID = extractID((String) cmbDoctor.getSelectedItem());
-        String consultationDate = txtConsultationDate.getText();
+
+        // A brand new consultation is always dated today, regardless of what
+        // txtConsultationDate happens to be showing (e.g. a previously
+        // selected row's historical date)
+        String consultationDate = LocalDate.now().toString();
         String diagnosis = jTextField3.getText();
         String notes = jTextArea1.getText();
 
-        consultationList.insertConsultation(
+        ClinicData.consultationList.insertConsultation(
                 patientID,
                 doctorID,
                 consultationDate,
@@ -631,7 +687,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
     private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
         String consultationID = jTextField2.getText();
 
-        ConsultationNode node = consultationList.searchConsultationNode("Consultation ID", consultationID);
+        ConsultationNode node = ClinicData.consultationList.searchConsultationNode("Consultation ID", consultationID);
         if (node != null) {
 
             // Only the ID portion of "ID - Name" is stored on the Consultation
@@ -639,7 +695,8 @@ public class ConsultationScreen extends javax.swing.JFrame {
 
             node.consultation.setDoctorID(extractID((String) cmbDoctor.getSelectedItem()));
 
-            node.consultation.setConsultationDate(txtConsultationDate.getText());
+            // Consultation Date is never changed on Update - it only changes
+            // when a brand new consultation is created
 
             node.consultation.setDiagnosis(jTextField3.getText());
 
@@ -684,7 +741,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
 
         if (option == JOptionPane.YES_OPTION) {
 
-            boolean deleted = consultationList.deleteConsultation(consultationID);
+            boolean deleted = ClinicData.consultationList.deleteConsultation(consultationID);
 
             if (deleted) {
 
@@ -722,17 +779,12 @@ public class ConsultationScreen extends javax.swing.JFrame {
         String keyword = jTextField1.getText().trim();
 
         // Perform the Linear Search
-        ConsultationNode node = consultationList.searchConsultationNode(searchBy, keyword);
+        ConsultationNode node = ClinicData.consultationList.searchConsultationNode(searchBy, keyword);
         // Check if the consultation was found
         if (node != null) {
 
             // Display consultation details
-            jTextField2.setText(node.consultation.getConsultationID());
-            cmbPatient.setSelectedItem(buildPatientLabel(node.consultation.getPatientID()));
-            cmbDoctor.setSelectedItem(buildDoctorLabel(node.consultation.getDoctorID()));
-            txtConsultationDate.setText(node.consultation.getConsultationDate());
-            jTextField3.setText(node.consultation.getDiagnosis());
-            jTextArea1.setText(node.consultation.getNotes());
+            populateConsultationFields(node.consultation);
 
             JOptionPane.showMessageDialog(this,
                     "Consultation found successfully!");

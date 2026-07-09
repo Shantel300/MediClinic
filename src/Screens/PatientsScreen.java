@@ -15,9 +15,6 @@ import javax.swing.table.DefaultTableModel;
  */
 public class PatientsScreen extends javax.swing.JFrame {
 
-// Linked list that stores all patients (shared across screens)
-    static PatientLinkedList patientList = new PatientLinkedList();
-
     /**
      * Creates new form MediClinicGUI
      */
@@ -54,7 +51,7 @@ public class PatientsScreen extends javax.swing.JFrame {
         model.setRowCount(0);
 
         // Start from the first node
-        PatientNode current = patientList.getHead();
+        PatientNode current = ClinicData.patientList.getHead();
 
         // Traverse the linked list
         while (current != null) {
@@ -70,6 +67,52 @@ public class PatientsScreen extends javax.swing.JFrame {
             });
 
             current = current.next;
+        }
+
+    }
+
+    /**
+     * Fills the Patient Details fields from a Patient object. Shared by the
+     * Search handler and by selectPatientByID.
+     */
+    private void populatePatientFields(Patient patient) {
+
+        txtPatientID.setText(patient.getPatientID());
+        txtPatientName.setText(patient.getPatientName());
+        txtAge.setText(String.valueOf(patient.getAge()));
+        cmbGender.setSelectedItem(patient.getGender());
+        txtPhoneNumber.setText(patient.getPhoneNumber());
+        txtAddress.setText(patient.getAddress());
+
+    }
+
+    /**
+     * Locates a patient by ID in the shared PatientLinkedList, loads the
+     * table, populates the detail fields, and selects/scrolls to the
+     * matching row. Called by the Dashboard's Global Search double-click so
+     * the user never has to search again.
+     */
+    public void selectPatientByID(String patientID) {
+
+        loadPatientsTable();
+
+        Patient patient = ClinicData.patientList.searchPatient(patientID);
+
+        if (patient == null) {
+            return;
+        }
+
+        populatePatientFields(patient);
+
+        // Find and highlight the matching row in the table
+        for (int row = 0; row < tblPatients.getRowCount(); row++) {
+
+            if (tblPatients.getValueAt(row, 0).toString().equalsIgnoreCase(patientID)) {
+
+                tblPatients.setRowSelectionInterval(row, row);
+                tblPatients.scrollRectToVisible(tblPatients.getCellRect(row, 0, true));
+                break;
+            }
         }
 
     }
@@ -496,7 +539,7 @@ public class PatientsScreen extends javax.swing.JFrame {
             String phone = txtPhoneNumber.getText();
             String address = txtAddress.getText();
 
-            patientList.insertPatient(
+            ClinicData.patientList.insertPatient(
                     patientName,
                     age,
                     gender,
@@ -539,7 +582,7 @@ public class PatientsScreen extends javax.swing.JFrame {
     private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
         String patientID = txtPatientID.getText();
 
-PatientNode node = patientList.searchPatientNode("Patient ID", patientID);
+PatientNode node = ClinicData.patientList.searchPatientNode("Patient ID", patientID);
         if (node != null) {
 
             node.patient.setPatientName(txtPatientName.getText());
@@ -595,7 +638,7 @@ PatientNode node = patientList.searchPatientNode("Patient ID", patientID);
 
         if (option == JOptionPane.YES_OPTION) {
 
-            boolean deleted = patientList.deletePatient(patientID);
+            boolean deleted = ClinicData.patientList.deletePatient(patientID);
 
             if (deleted) {
 
@@ -624,17 +667,12 @@ PatientNode node = patientList.searchPatientNode("Patient ID", patientID);
         String keyword = txtSearch.getText().trim();
 
 // Perform the Linear Search
-PatientNode node = patientList.searchPatientNode(searchBy, keyword);
+PatientNode node = ClinicData.patientList.searchPatientNode(searchBy, keyword);
 // Check if the patient was found
         if (node != null) {
 
             // Display patient details
-            txtPatientID.setText(node.patient.getPatientID());
-            txtPatientName.setText(node.patient.getPatientName());
-            txtAge.setText(String.valueOf(node.patient.getAge()));
-            cmbGender.setSelectedItem(node.patient.getGender());
-            txtPhoneNumber.setText(node.patient.getPhoneNumber());
-            txtAddress.setText(node.patient.getAddress());
+            populatePatientFields(node.patient);
 
             JOptionPane.showMessageDialog(this,
                     "Patient found successfully!");

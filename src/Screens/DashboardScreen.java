@@ -21,10 +21,253 @@ public class DashboardScreen extends javax.swing.JFrame {
      */
     public DashboardScreen() {
         initComponents();
-        
-            lblTotalPatients.setText("0");
-    lblTotalDoctors.setText("0");
-    lblTotalConsultations.setText("0");
+
+        // Every time the Dashboard opens, pull the latest figures from the
+        // shared linked lists
+        refreshDashboard();
+    }
+
+    /**
+     * Reloads every live figure on the Dashboard from the shared linked
+     * lists: the three totals, the Recent Consultations table, and clears
+     * any leftover Global Search keyword/results from a previous visit.
+     */
+    private void refreshDashboard() {
+
+        lblTotalPatients.setText(String.valueOf(countPatients()));
+        lblTotalDoctors.setText(String.valueOf(countDoctors()));
+        lblTotalConsultations.setText(String.valueOf(countConsultations()));
+
+        loadRecentConsultationsTable();
+
+        // Clear any keyword/results left over from a previous visit
+        txtGlobalSearch.setText("");
+        DefaultTableModel searchModel = (DefaultTableModel) tblGlobalSearchResults.getModel();
+        searchModel.setRowCount(0);
+
+    }
+
+    /**
+     * Counts every patient currently stored in the shared PatientLinkedList.
+     */
+    private int countPatients() {
+
+        int count = 0;
+
+        // Start from the first node
+        PatientNode current = ClinicData.patientList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+            count++;
+            current = current.next;
+        }
+
+        return count;
+    }
+
+    /**
+     * Counts every doctor currently stored in the shared DoctorLinkedList.
+     */
+    private int countDoctors() {
+
+        int count = 0;
+
+        // Start from the first node
+        DoctorNode current = ClinicData.doctorList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+            count++;
+            current = current.next;
+        }
+
+        return count;
+    }
+
+    /**
+     * Counts every consultation currently stored in the shared
+     * ConsultationLinkedList.
+     */
+    private int countConsultations() {
+
+        int count = 0;
+
+        // Start from the first node
+        ConsultationNode current = ClinicData.consultationList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+            count++;
+            current = current.next;
+        }
+
+        return count;
+    }
+
+    /**
+     * Looks up a patient's name by ID in the shared PatientLinkedList.
+     * Returns "Unknown" if the patient no longer exists.
+     */
+    private String findPatientName(String patientID) {
+
+        Patient patient = ClinicData.patientList.searchPatient(patientID);
+
+        return (patient != null) ? patient.getPatientName() : "Unknown";
+    }
+
+    /**
+     * Looks up a doctor's name by ID in the shared DoctorLinkedList. Returns
+     * "Unknown" if the doctor no longer exists.
+     */
+    private String findDoctorName(String doctorID) {
+
+        Doctor doctor = ClinicData.doctorList.searchDoctor(doctorID);
+
+        return (doctor != null) ? doctor.getDoctorName() : "Unknown";
+    }
+
+    /**
+     * Builds a "ID - Name" label for a patient, by looking them up in the
+     * shared PatientLinkedList. Falls back to the raw ID if not found.
+     */
+    private String findPatientLabel(String patientID) {
+
+        Patient patient = ClinicData.patientList.searchPatient(patientID);
+
+        if (patient != null) {
+            return patient.getPatientID() + " - " + patient.getPatientName();
+        }
+
+        return patientID;
+    }
+
+    /**
+     * Populates the Recent Consultations table by traversing the shared
+     * ConsultationLinkedList, resolving the Patient/Doctor names from their
+     * respective linked lists via the stored IDs.
+     */
+    private void loadRecentConsultationsTable() {
+
+        // Get the table model
+        DefaultTableModel model
+                = (DefaultTableModel) tblRecentConsultation.getModel();
+
+        // Clear existing rows
+        model.setRowCount(0);
+
+        // Start from the first node
+        ConsultationNode current = ClinicData.consultationList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+
+            model.addRow(new Object[]{
+                current.consultation.getConsultationID(),
+                findPatientName(current.consultation.getPatientID()),
+                findDoctorName(current.consultation.getDoctorID()),
+                current.consultation.getConsultationDate(),
+                current.consultation.getDiagnosis()
+            });
+
+            current = current.next;
+        }
+
+    }
+
+    /**
+     * Validates the Global Search keyword and, if present, runs the search.
+     * Shared by both the Search button and pressing Enter in the search box.
+     */
+    private void runGlobalSearch() {
+
+        String keyword = txtGlobalSearch.getText().trim();
+
+        if (keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a keyword.");
+            return;
+        }
+
+        performGlobalSearch(keyword);
+    }
+
+    /**
+     * Searches Patients (by ID, Name, or Phone Number), Doctors (by ID,
+     * Name, or Phone Number), and Consultations (by ID or Diagnosis) using
+     * Linear Search across each shared linked list, and populates the
+     * Search Results table. Shows a message if nothing matched.
+     */
+    private void performGlobalSearch(String keyword) {
+
+        DefaultTableModel model = (DefaultTableModel) tblGlobalSearchResults.getModel();
+        model.setRowCount(0);
+
+        String key = keyword.toLowerCase();
+
+        // Search patients by ID, name, or phone number
+        PatientNode p = ClinicData.patientList.getHead();
+        while (p != null) {
+
+            if (p.patient.getPatientID().toLowerCase().contains(key)
+                    || p.patient.getPatientName().toLowerCase().contains(key)
+                    || p.patient.getPhoneNumber().toLowerCase().contains(key)) {
+
+                model.addRow(new Object[]{
+                    "Patient",
+                    p.patient.getPatientID(),
+                    p.patient.getPatientName(),
+                    "Phone: " + p.patient.getPhoneNumber()
+                });
+            }
+
+            p = p.next;
+        }
+
+        // Search doctors by ID, name, or phone number
+        DoctorNode d = ClinicData.doctorList.getHead();
+        while (d != null) {
+
+            if (d.doctor.getDoctorID().toLowerCase().contains(key)
+                    || d.doctor.getDoctorName().toLowerCase().contains(key)
+                    || d.doctor.getPhoneNumber().toLowerCase().contains(key)) {
+
+                model.addRow(new Object[]{
+                    "Doctor",
+                    d.doctor.getDoctorID(),
+                    d.doctor.getDoctorName(),
+                    d.doctor.getSpecialization()
+                });
+            }
+
+            d = d.next;
+        }
+
+        // Search consultations by ID or diagnosis
+        ConsultationNode c = ClinicData.consultationList.getHead();
+        while (c != null) {
+
+            if (c.consultation.getConsultationID().toLowerCase().contains(key)
+                    || c.consultation.getDiagnosis().toLowerCase().contains(key)) {
+
+                model.addRow(new Object[]{
+                    "Consultation",
+                    c.consultation.getConsultationID(),
+                    findPatientLabel(c.consultation.getPatientID()),
+                    c.consultation.getDiagnosis()
+                });
+            }
+
+            c = c.next;
+        }
+
+        if (model.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "No results found.");
+        }
+
+        // Clear the keyword after every search (found or not) - the results
+        // table keeps showing the matches until the next search runs
+        txtGlobalSearch.setText("");
+
     }
     
    
@@ -196,7 +439,7 @@ public class DashboardScreen extends javax.swing.JFrame {
 
         jLabel2.setText("Welcome back! Here is your sytem overview");
 
-        jPanel4.setBackground(javax.swing.UIManager.getDefaults().getColor("HelpButton.focusedBackground"));
+        jPanel4.setBackground(new java.awt.Color(191, 214, 236));
         jPanel4.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         jLabel3.setText("TOTAL PATIENTS");
@@ -228,7 +471,7 @@ public class DashboardScreen extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel5.setBackground(javax.swing.UIManager.getDefaults().getColor("HelpButton.focusedBackground"));
+        jPanel5.setBackground(new java.awt.Color(191, 214, 236));
         jPanel5.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         jLabel5.setText("TOTAL DOCTORS");
@@ -260,7 +503,7 @@ public class DashboardScreen extends javax.swing.JFrame {
                 .addGap(45, 45, 45))
         );
 
-        jPanel6.setBackground(javax.swing.UIManager.getDefaults().getColor("HelpButton.focusedBackground"));
+        jPanel6.setBackground(new java.awt.Color(191, 214, 236));
         jPanel6.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         jLabel7.setText("TOTAL CONSULTATIONS");
@@ -309,7 +552,7 @@ public class DashboardScreen extends javax.swing.JFrame {
         jLabel9.setForeground(new java.awt.Color(0, 102, 204));
         jLabel9.setText("RECENT CONSULTATIONS");
 
-        jPanel9.setBackground(javax.swing.UIManager.getDefaults().getColor("HelpButton.focusedBackground"));
+        jPanel9.setBackground(new java.awt.Color(191, 214, 236));
 
         jLabel12.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel12.setForeground(new java.awt.Color(0, 102, 204));
@@ -517,18 +760,12 @@ JOptionPane.showMessageDialog(this,
     }//GEN-LAST:event_btnAboutActionPerformed
 
     private void txtGlobalSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtGlobalSearchActionPerformed
-        // TODO add your handling code here:
+        runGlobalSearch();
     }//GEN-LAST:event_txtGlobalSearchActionPerformed
 
     private void btnGlobalSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGlobalSearchActionPerformed
-String keyword = txtGlobalSearch.getText().trim();
-
-    if(keyword.isEmpty()){
-        JOptionPane.showMessageDialog(this,
-                "Please enter a keyword.");
-        return;
-    }
-        }//GEN-LAST:event_btnGlobalSearchActionPerformed
+        runGlobalSearch();
+    }//GEN-LAST:event_btnGlobalSearchActionPerformed
 
     private void tblGlobalSearchResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGlobalSearchResultsMouseClicked
 if(evt.getClickCount()==2){
@@ -538,9 +775,14 @@ if(evt.getClickCount()==2){
     String type =
             tblGlobalSearchResults.getValueAt(row,0).toString();
 
+    // Column 1 is always the ID of the matched record
+    String id = tblGlobalSearchResults.getValueAt(row, 1).toString();
+
     if(type.equals("Patient")){
 
-        new PatientsScreen().setVisible(true);
+        PatientsScreen patientsScreen = new PatientsScreen();
+        patientsScreen.selectPatientByID(id);
+        patientsScreen.setVisible(true);
 
         dispose();
 
@@ -548,7 +790,9 @@ if(evt.getClickCount()==2){
 
     else if(type.equals("Doctor")){
 
-        new DoctorsScreen().setVisible(true);
+        DoctorsScreen doctorsScreen = new DoctorsScreen();
+        doctorsScreen.selectDoctorByID(id);
+        doctorsScreen.setVisible(true);
 
         dispose();
 
@@ -556,7 +800,9 @@ if(evt.getClickCount()==2){
 
     else{
 
-        new ConsultationScreen().setVisible(true);
+        ConsultationScreen consultationScreen = new ConsultationScreen();
+        consultationScreen.selectConsultationByID(id);
+        consultationScreen.setVisible(true);
 
         dispose();
 

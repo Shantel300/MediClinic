@@ -14,9 +14,6 @@ import javax.swing.table.DefaultTableModel;
  */
 public class DoctorsScreen extends javax.swing.JFrame {
 
-// Linked list that stores all doctors (shared across screens)
-    static DoctorLinkedList doctorList = new DoctorLinkedList();
-
     /**
      * Creates new form MediClinicGUI
      */
@@ -53,7 +50,7 @@ public class DoctorsScreen extends javax.swing.JFrame {
         model.setRowCount(0);
 
         // Start from the first node
-        DoctorNode current = doctorList.getHead();
+        DoctorNode current = ClinicData.doctorList.getHead();
 
         // Traverse the linked list
         while (current != null) {
@@ -69,6 +66,52 @@ public class DoctorsScreen extends javax.swing.JFrame {
             });
 
             current = current.next;
+        }
+
+    }
+
+    /**
+     * Fills the Doctor Details fields from a Doctor object. Shared by the
+     * Search handler and by selectDoctorByID.
+     */
+    private void populateDoctorFields(Doctor doctor) {
+
+        txtDoctorId.setText(doctor.getDoctorID());
+        txtDoctorName.setText(doctor.getDoctorName());
+        cmbSpecialization.setSelectedItem(doctor.getSpecialization());
+        txtPhoneNumber.setText(doctor.getPhoneNumber());
+        txtEmailAddress.setText(doctor.getEmailAddress());
+        txtAddress.setText(doctor.getAddress());
+
+    }
+
+    /**
+     * Locates a doctor by ID in the shared DoctorLinkedList, loads the
+     * table, populates the detail fields, and selects/scrolls to the
+     * matching row. Called by the Dashboard's Global Search double-click so
+     * the user never has to search again.
+     */
+    public void selectDoctorByID(String doctorID) {
+
+        loadDoctorsTable();
+
+        Doctor doctor = ClinicData.doctorList.searchDoctor(doctorID);
+
+        if (doctor == null) {
+            return;
+        }
+
+        populateDoctorFields(doctor);
+
+        // Find and highlight the matching row in the table
+        for (int row = 0; row < tblDoctorList.getRowCount(); row++) {
+
+            if (tblDoctorList.getValueAt(row, 0).toString().equalsIgnoreCase(doctorID)) {
+
+                tblDoctorList.setRowSelectionInterval(row, row);
+                tblDoctorList.scrollRectToVisible(tblDoctorList.getCellRect(row, 0, true));
+                break;
+            }
         }
 
     }
@@ -500,7 +543,7 @@ public class DoctorsScreen extends javax.swing.JFrame {
         String email = txtEmailAddress.getText();
         String address = txtAddress.getText();
 
-        doctorList.insertDoctor(
+        ClinicData.doctorList.insertDoctor(
                 doctorName,
                 specialization,
                 phone,
@@ -514,12 +557,12 @@ public class DoctorsScreen extends javax.swing.JFrame {
     private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
         String doctorID = txtDoctorId.getText();
 
-        DoctorNode node = doctorList.searchDoctorNode("Doctor ID", doctorID);
+        DoctorNode node = ClinicData.doctorList.searchDoctorNode("Doctor ID", doctorID);
         if (node != null) {
 
             node.doctor.setDoctorName(txtDoctorName.getText());
 
-            node.doctor.setSpecialization(cmbSpecialization.toString());
+            node.doctor.setSpecialization(cmbSpecialization.getSelectedItem().toString());
 
             node.doctor.setPhoneNumber(txtPhoneNumber.getText());
 
@@ -566,7 +609,7 @@ public class DoctorsScreen extends javax.swing.JFrame {
 
         if (option == JOptionPane.YES_OPTION) {
 
-            boolean deleted = doctorList.deleteDoctor(doctorID);
+            boolean deleted = ClinicData.doctorList.deleteDoctor(doctorID);
 
             if (deleted) {
 
@@ -621,17 +664,12 @@ public class DoctorsScreen extends javax.swing.JFrame {
         String keyword = jTextField1.getText().trim();
 
         // Perform the Linear Search
-        DoctorNode node = doctorList.searchDoctorNode(searchBy, keyword);
+        DoctorNode node = ClinicData.doctorList.searchDoctorNode(searchBy, keyword);
         // Check if the doctor was found
         if (node != null) {
 
             // Display doctor details
-            txtDoctorId.setText(node.doctor.getDoctorID());
-            txtDoctorName.setText(node.doctor.getDoctorName());
-            cmbSpecialization.setSelectedItem(node.doctor.getSpecialization());
-            txtPhoneNumber.setText(node.doctor.getPhoneNumber());
-            txtEmailAddress.setText(node.doctor.getEmailAddress());
-            txtAddress.setText(node.doctor.getAddress());
+            populateDoctorFields(node.doctor);
 
             JOptionPane.showMessageDialog(this,
                     "Doctor found successfully!");
