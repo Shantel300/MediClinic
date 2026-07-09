@@ -1,5 +1,9 @@
 package Screens;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -11,11 +15,176 @@ package Screens;
  */
 public class ConsultationScreen extends javax.swing.JFrame {
 
+// Linked list that stores all consultations
+    private ConsultationLinkedList consultationList = new ConsultationLinkedList();
+
     /**
      * Creates new form MediClinicGUI
      */
     public ConsultationScreen() {
         initComponents();
+
+        // Populate the Patient/Doctor pickers from the shared linked lists
+        loadPatientComboBox();
+        loadDoctorComboBox();
+    }
+
+    /**
+     * Clears all input fields after adding a consultation.
+     */
+    private void clearFields() {
+
+        jTextField2.setText("");
+
+        // Only reset the selection if there is at least one item, otherwise
+        // setSelectedIndex(0) on an empty combo box throws an exception
+        if (cmbPatient.getItemCount() > 0) {
+            cmbPatient.setSelectedIndex(0);
+        }
+        if (cmbDoctor.getItemCount() > 0) {
+            cmbDoctor.setSelectedIndex(0);
+        }
+
+        txtConsultationDate.setText("");
+        jTextField3.setText("");
+        jTextArea1.setText("");
+
+        cmbPatient.requestFocus();
+
+    }
+
+    /**
+     * Loads every patient from PatientsScreen's shared PatientLinkedList into
+     * the Patient combo box, formatted as "ID - Name". Replaces the
+     * placeholder items NetBeans generated for jComboBox3.
+     */
+    private void loadPatientComboBox() {
+
+        // Build the list of "ID - Name" labels from the linked list
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+
+        // Start from the first node
+        PatientNode current = PatientsScreen.patientList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+
+            model.addElement(
+                    current.patient.getPatientID()
+                    + " - " + current.patient.getPatientName());
+
+            current = current.next;
+        }
+
+        // Replace jComboBox3's model (still leaves nothing if no patients exist)
+        cmbPatient.setModel(model);
+
+    }
+
+    /**
+     * Loads every doctor from DoctorsScreen's shared DoctorLinkedList into the
+     * Doctor combo box, formatted as "ID - Name". Replaces the placeholder
+     * items NetBeans generated for jComboBox4.
+     */
+    private void loadDoctorComboBox() {
+
+        // Build the list of "ID - Name" labels from the linked list
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+
+        // Start from the first node
+        DoctorNode current = DoctorsScreen.doctorList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+
+            model.addElement(
+                    current.doctor.getDoctorID()
+                    + " - " + current.doctor.getDoctorName());
+
+            current = current.next;
+        }
+
+        // Replace jComboBox4's model (still leaves nothing if no doctors exist)
+        cmbDoctor.setModel(model);
+
+    }
+
+    /**
+     * Extracts the ID portion from a combo box item formatted as "ID - Name".
+     */
+    private String extractID(String comboItem) {
+
+        if (comboItem == null || comboItem.isEmpty()) {
+            return "";
+        }
+
+        return comboItem.split(" - ")[0].trim();
+    }
+
+    /**
+     * Rebuilds the "ID - Name" label for a stored Patient ID, by looking the
+     * patient up in the shared PatientLinkedList.
+     */
+    private String buildPatientLabel(String patientID) {
+
+        Patient patient = PatientsScreen.patientList.searchPatient(patientID);
+
+        if (patient != null) {
+            return patient.getPatientID() + " - " + patient.getPatientName();
+        }
+
+        // Patient no longer exists (or wasn't found) - fall back to the raw ID
+        return patientID;
+    }
+
+    /**
+     * Rebuilds the "ID - Name" label for a stored Doctor ID, by looking the
+     * doctor up in the shared DoctorLinkedList.
+     */
+    private String buildDoctorLabel(String doctorID) {
+
+        Doctor doctor = DoctorsScreen.doctorList.searchDoctor(doctorID);
+
+        if (doctor != null) {
+            return doctor.getDoctorID() + " - " + doctor.getDoctorName();
+        }
+
+        // Doctor no longer exists (or wasn't found) - fall back to the raw ID
+        return doctorID;
+    }
+
+    /**
+     * Loads all consultations from the linked list into the JTable, showing
+     * the Patient/Doctor columns as "ID - Name" instead of the raw IDs.
+     */
+    private void loadConsultationsTable() {
+
+        // Get the table model
+        DefaultTableModel model
+                = (DefaultTableModel) tblConsultationList.getModel();
+
+        // Clear existing rows
+        model.setRowCount(0);
+
+        // Start from the first node
+        ConsultationNode current = consultationList.getHead();
+
+        // Traverse the linked list
+        while (current != null) {
+
+            model.addRow(new Object[]{
+                current.consultation.getConsultationID(),
+                buildPatientLabel(current.consultation.getPatientID()),
+                buildDoctorLabel(current.consultation.getDoctorID()),
+                current.consultation.getConsultationDate(),
+                current.consultation.getDiagnosis(),
+                current.consultation.getNotes()
+
+            });
+
+            current = current.next;
+        }
+
     }
 
     /**
@@ -35,14 +204,14 @@ public class ConsultationScreen extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tblConsultationList = new javax.swing.JTable();
         jLabel9 = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel12 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        cmbSearchBy = new javax.swing.JComboBox<>();
         jTextField1 = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        btnSearch = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
@@ -54,13 +223,14 @@ public class ConsultationScreen extends javax.swing.JFrame {
         jTextField2 = new javax.swing.JTextField();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
-        jComboBox3 = new javax.swing.JComboBox<>();
-        jComboBox4 = new javax.swing.JComboBox<>();
-        jTextField6 = new javax.swing.JTextField();
+        btnAdd = new javax.swing.JButton();
+        btnUpdate = new javax.swing.JButton();
+        btnDelete = new javax.swing.JButton();
+        btnClear = new javax.swing.JButton();
+        cmbPatient = new javax.swing.JComboBox<>();
+        cmbDoctor = new javax.swing.JComboBox<>();
+        txtConsultationDate = new javax.swing.JTextField();
+        jTextField3 = new javax.swing.JTextField();
         jButton6 = new javax.swing.JButton();
         jPanel8 = new javax.swing.JPanel();
 
@@ -102,7 +272,7 @@ public class ConsultationScreen extends javax.swing.JFrame {
 
         jLabel2.setText("Welcome back! Here is your sytem overview");
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tblConsultationList.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null},
                 {null, null, null, null, null, null},
@@ -110,29 +280,39 @@ public class ConsultationScreen extends javax.swing.JFrame {
                 {null, null, null, null, null, null}
             },
             new String [] {
-                "Patient ID", "Patient Name", "Age", "Gender", "Phone Number", "Address"
+                "Consultation ID", "Patient ", "Doctor", "Date", "Diagnosis", "Notes"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        tblConsultationList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblConsultationListMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblConsultationList);
 
         jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(0, 102, 204));
-        jLabel9.setText("PATIENT LIST");
+        jLabel9.setText("CONSULTATION LIST");
 
         jPanel9.setBackground(javax.swing.UIManager.getDefaults().getColor("HelpButton.focusedBackground"));
 
         jLabel12.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel12.setForeground(new java.awt.Color(0, 102, 204));
-        jLabel12.setText("SEARCH PATIENT");
+        jLabel12.setText("SEARCH CONSULTATION");
 
         jLabel3.setText("Search By");
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Patient ID", " ", "Patient Name", " ", "Phone Number", " " }));
+        cmbSearchBy.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Consultation ID", "Patient ID", "Doctor ID", " ", " " }));
 
-        jButton1.setBackground(new java.awt.Color(0, 102, 204));
-        jButton1.setForeground(new java.awt.Color(255, 255, 255));
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/search.png"))); // NOI18N
-        jButton1.setText("Search");
+        btnSearch.setBackground(new java.awt.Color(0, 102, 204));
+        btnSearch.setForeground(new java.awt.Color(255, 255, 255));
+        btnSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/search.png"))); // NOI18N
+        btnSearch.setText("Search");
+        btnSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSearchActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
@@ -147,11 +327,11 @@ public class ConsultationScreen extends javax.swing.JFrame {
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addComponent(jLabel3)
                         .addGap(18, 18, 18)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cmbSearchBy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton1)))
+                        .addComponent(btnSearch)))
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -162,9 +342,9 @@ public class ConsultationScreen extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbSearchBy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
+                    .addComponent(btnSearch))
                 .addContainerGap(31, Short.MAX_VALUE))
         );
 
@@ -190,27 +370,52 @@ public class ConsultationScreen extends javax.swing.JFrame {
         jTextArea1.setRows(5);
         jScrollPane2.setViewportView(jTextArea1);
 
-        jButton2.setBackground(new java.awt.Color(51, 153, 0));
-        jButton2.setForeground(new java.awt.Color(255, 255, 255));
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/plus.png"))); // NOI18N
-        jButton2.setText("Add");
+        btnAdd.setBackground(new java.awt.Color(51, 153, 0));
+        btnAdd.setForeground(new java.awt.Color(255, 255, 255));
+        btnAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/plus.png"))); // NOI18N
+        btnAdd.setText("Add");
+        btnAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddActionPerformed(evt);
+            }
+        });
 
-        jButton3.setBackground(new java.awt.Color(0, 102, 204));
-        jButton3.setForeground(new java.awt.Color(255, 255, 255));
-        jButton3.setText("Update");
+        btnUpdate.setBackground(new java.awt.Color(0, 102, 204));
+        btnUpdate.setForeground(new java.awt.Color(255, 255, 255));
+        btnUpdate.setText("Update");
+        btnUpdate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUpdateActionPerformed(evt);
+            }
+        });
 
-        jButton4.setBackground(new java.awt.Color(255, 51, 51));
-        jButton4.setForeground(new java.awt.Color(255, 255, 255));
-        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/bin.png"))); // NOI18N
-        jButton4.setText("Delete");
+        btnDelete.setBackground(new java.awt.Color(255, 51, 51));
+        btnDelete.setForeground(new java.awt.Color(255, 255, 255));
+        btnDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/bin.png"))); // NOI18N
+        btnDelete.setText("Delete");
+        btnDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeleteActionPerformed(evt);
+            }
+        });
 
-        jButton5.setBackground(new java.awt.Color(204, 204, 204));
-        jButton5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/closed.png"))); // NOI18N
-        jButton5.setText("Clear");
+        btnClear.setBackground(new java.awt.Color(204, 204, 204));
+        btnClear.setIcon(new javax.swing.ImageIcon(getClass().getResource("/closed.png"))); // NOI18N
+        btnClear.setText("Clear");
+        btnClear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearActionPerformed(evt);
+            }
+        });
 
-        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbPatient.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbPatient.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbPatientActionPerformed(evt);
+            }
+        });
 
-        jComboBox4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbDoctor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -229,8 +434,8 @@ public class ConsultationScreen extends javax.swing.JFrame {
                                 .addGap(40, 40, 40)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jTextField2)
-                                    .addComponent(jComboBox3, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jComboBox4, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addComponent(cmbPatient, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(cmbDoctor, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jLabel4)
                                 .addGap(0, 0, Short.MAX_VALUE))
@@ -240,19 +445,22 @@ public class ConsultationScreen extends javax.swing.JFrame {
                                     .addComponent(jLabel13)
                                     .addComponent(jLabel14))
                                 .addGap(73, 73, 73)
-                                .addComponent(jTextField6)))
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtConsultationDate)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(0, 0, Short.MAX_VALUE)))))
                         .addGap(18, 18, 18))
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(jButton2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton5)))
+                        .addComponent(btnAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnUpdate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnDelete)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnClear)
                         .addContainerGap(24, Short.MAX_VALUE))))
         );
         jPanel2Layout.setVerticalGroup(
@@ -260,8 +468,12 @@ public class ConsultationScreen extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(txtConsultationDate, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel5)
@@ -269,32 +481,28 @@ public class ConsultationScreen extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel6)
-                            .addComponent(jComboBox3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(cmbPatient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel7)
-                            .addComponent(jComboBox4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(cmbDoctor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
                         .addComponent(jLabel8)
                         .addGap(18, 18, 18)
-                        .addComponent(jLabel13))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(34, 34, 34)))
+                        .addComponent(jLabel13)))
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(33, 33, 33)
-                        .addComponent(jLabel14)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                        .addComponent(jLabel14))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton2)
-                    .addComponent(jButton3)
-                    .addComponent(jButton4)
-                    .addComponent(jButton5))
+                    .addComponent(btnAdd)
+                    .addComponent(btnUpdate)
+                    .addComponent(btnDelete)
+                    .addComponent(btnClear))
                 .addContainerGap())
         );
 
@@ -302,6 +510,11 @@ public class ConsultationScreen extends javax.swing.JFrame {
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/exit.png"))); // NOI18N
         jButton6.setText("Back to dashboard");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -396,6 +609,174 @@ public class ConsultationScreen extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
+        // Only the ID portion of "ID - Name" is stored on the Consultation
+        String patientID = extractID((String) cmbPatient.getSelectedItem());
+        String doctorID = extractID((String) cmbDoctor.getSelectedItem());
+        String consultationDate = txtConsultationDate.getText();
+        String diagnosis = jTextField3.getText();
+        String notes = jTextArea1.getText();
+
+        consultationList.insertConsultation(
+                patientID,
+                doctorID,
+                consultationDate,
+                diagnosis,
+                notes);
+
+        clearFields();
+        loadConsultationsTable();
+    }//GEN-LAST:event_btnAddActionPerformed
+
+    private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
+        String consultationID = jTextField2.getText();
+
+        ConsultationNode node = consultationList.searchConsultationNode("Consultation ID", consultationID);
+        if (node != null) {
+
+            // Only the ID portion of "ID - Name" is stored on the Consultation
+            node.consultation.setPatientID(extractID((String) cmbPatient.getSelectedItem()));
+
+            node.consultation.setDoctorID(extractID((String) cmbDoctor.getSelectedItem()));
+
+            node.consultation.setConsultationDate(txtConsultationDate.getText());
+
+            node.consultation.setDiagnosis(jTextField3.getText());
+
+            node.consultation.setNotes(jTextArea1.getText());
+
+            loadConsultationsTable();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Consultation updated successfully!");
+
+            clearFields();
+
+        } else {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Consultation not found.");
+
+        }
+    }//GEN-LAST:event_btnUpdateActionPerformed
+
+    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
+        // Get the Consultation ID
+        String consultationID = jTextField2.getText();
+
+        // Check if a consultation is selected
+        if (consultationID.isEmpty()) {
+
+            JOptionPane.showMessageDialog(this,
+                    "Please select a consultation first.");
+
+            return;
+        }
+
+        // Ask for confirmation
+        int option = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to delete this consultation?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
+
+        if (option == JOptionPane.YES_OPTION) {
+
+            boolean deleted = consultationList.deleteConsultation(consultationID);
+
+            if (deleted) {
+
+                loadConsultationsTable();
+
+                clearFields();
+
+                JOptionPane.showMessageDialog(this,
+                        "Consultation deleted successfully.");
+
+            } else {
+
+                JOptionPane.showMessageDialog(this,
+                        "Consultation not found.");
+
+            }
+
+        }
+    }//GEN-LAST:event_btnDeleteActionPerformed
+
+    private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
+        clearFields();
+    }//GEN-LAST:event_btnClearActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        new DashboardScreen().setVisible(true);
+        dispose();
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void btnSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchActionPerformed
+        // Get the selected search option
+        String searchBy = cmbSearchBy.getSelectedItem().toString();
+
+        // Get the keyword entered by the user
+        String keyword = jTextField1.getText().trim();
+
+        // Perform the Linear Search
+        ConsultationNode node = consultationList.searchConsultationNode(searchBy, keyword);
+        // Check if the consultation was found
+        if (node != null) {
+
+            // Display consultation details
+            jTextField2.setText(node.consultation.getConsultationID());
+            cmbPatient.setSelectedItem(buildPatientLabel(node.consultation.getPatientID()));
+            cmbDoctor.setSelectedItem(buildDoctorLabel(node.consultation.getDoctorID()));
+            txtConsultationDate.setText(node.consultation.getConsultationDate());
+            jTextField3.setText(node.consultation.getDiagnosis());
+            jTextArea1.setText(node.consultation.getNotes());
+
+            JOptionPane.showMessageDialog(this,
+                    "Consultation found successfully!");
+
+            jTextField1.setText("");
+            jTextField1.requestFocus();
+
+        } else {
+
+            JOptionPane.showMessageDialog(this,
+                    "Consultation not found.");
+
+            jTextField1.setText("");
+            jTextField1.requestFocus();
+        }
+
+    }//GEN-LAST:event_btnSearchActionPerformed
+
+    private void tblConsultationListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblConsultationListMouseClicked
+        int row = tblConsultationList.getSelectedRow();
+
+        jTextField2.setText(
+                tblConsultationList.getValueAt(row, 0).toString());
+
+        cmbPatient.setSelectedItem(
+                tblConsultationList.getValueAt(row, 1).toString());
+
+        cmbDoctor.setSelectedItem(
+                tblConsultationList.getValueAt(row, 2).toString());
+
+        txtConsultationDate.setText(
+                tblConsultationList.getValueAt(row, 3).toString());
+
+        jTextField3.setText(
+                tblConsultationList.getValueAt(row, 4).toString());
+
+        jTextArea1.setText(
+                tblConsultationList.getValueAt(row, 5).toString());
+    }//GEN-LAST:event_tblConsultationListMouseClicked
+
+    private void cmbPatientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbPatientActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbPatientActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -439,15 +820,15 @@ public class ConsultationScreen extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
+    private javax.swing.JButton btnAdd;
+    private javax.swing.JButton btnClear;
+    private javax.swing.JButton btnDelete;
+    private javax.swing.JButton btnSearch;
+    private javax.swing.JButton btnUpdate;
+    private javax.swing.JComboBox<String> cmbDoctor;
+    private javax.swing.JComboBox<String> cmbPatient;
+    private javax.swing.JComboBox<String> cmbSearchBy;
     private javax.swing.JButton jButton6;
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox3;
-    private javax.swing.JComboBox<String> jComboBox4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -469,11 +850,12 @@ public class ConsultationScreen extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField6;
+    private javax.swing.JTextField jTextField3;
     private javax.swing.JPanel pnlHeader;
+    private javax.swing.JTable tblConsultationList;
+    private javax.swing.JTextField txtConsultationDate;
     // End of variables declaration//GEN-END:variables
 }

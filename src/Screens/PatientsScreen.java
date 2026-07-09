@@ -15,8 +15,8 @@ import javax.swing.table.DefaultTableModel;
  */
 public class PatientsScreen extends javax.swing.JFrame {
 
-// Linked list that stores all patients
-    private PatientLinkedList patientList = new PatientLinkedList();
+// Linked list that stores all patients (shared across screens)
+    static PatientLinkedList patientList = new PatientLinkedList();
 
     /**
      * Creates new form MediClinicGUI
@@ -388,6 +388,11 @@ public class PatientsScreen extends javax.swing.JFrame {
         jButton6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/exit.png"))); // NOI18N
         jButton6.setText("Back to dashboard");
         jButton6.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -647,6 +652,12 @@ txtSearch.requestFocus();
         }
 
     }//GEN-LAST:event_btnSearchActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+new DashboardScreen().setVisible(true);
+        dispose();
+
+    }//GEN-LAST:event_jButton6ActionPerformed
 
     /**
      * @param args the command line arguments
